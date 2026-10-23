@@ -1,1 +1,23 @@
-test
+node_modules/
+.next/
+out/
+build/
+dist/
+coverage/
+.env
+.env.local
+.env.*.local
+data/*.db
+data/*.db-*
+data/.session-secret
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+playwright-report/
+test-results/
+.vscode/
+.idea/
+
+# Next.js dev helper / local logs
+AGENTS.md
+dev*.log
