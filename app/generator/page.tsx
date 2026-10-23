@@ -50,7 +50,8 @@ export default async function GeneratorPage() {
       <div className="mb-5">
         <Alert tone="warn" title="Cosa non fa il generatore">
           <ul className="list-disc space-y-1 pl-4">
-            <li>Non usa quote e non calcola valore atteso, ROI o profitti.</li>
+            <li>Non usa le quote per calcolare le probabilità e non calcola valore atteso, ROI o profitti.</li>
+            <li>Mostra le quote solo come contesto di mercato, quando la fonte le fornisce.</li>
             <li>Non abbassa le soglie per produrre uno scenario a tutti i costi.</li>
             <li>Non gestisce denaro, depositi o puntate reali.</li>
           </ul>

@@ -111,7 +111,8 @@ export function generateProposals(
 
   const assumptions = [
     "Le leg appartengono a partite distinte: la probabilità congiunta è il prodotto delle stime, assumendo indipendenza condizionata.",
-    "Le probabilità sono stime del modello Poisson/Dixon-Coles, non quote e non frequenze garantite.",
+    "Le probabilità sono stime del modello Poisson/Dixon-Coles, non frequenze garantite.",
+    "Le quote, quando mostrate, sono un dato di mercato separato: non modificano le probabilità e non implicano un rendimento atteso.",
     "Nessuna soglia è stata abbassata automaticamente per produrre uno scenario.",
   ];
 
@@ -212,6 +213,7 @@ export function generateProposals(
         probability: leg.probability,
         qualityScore: leg.quality.score,
         uncertainty: leg.interval,
+        market: leg.market,
         rationale: explainLeg({
           fixtureLabel: `${leg.homeTeamName} – ${leg.awayTeamName}`,
           marketId: leg.marketId,

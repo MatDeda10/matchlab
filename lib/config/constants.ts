@@ -14,11 +14,17 @@ export const APP = {
 } as const;
 
 export const DATA_SOURCE = {
-  provider: process.env.DATA_PROVIDER === "football-data" ? "football-data" : "demo",
+  provider:
+    process.env.DATA_PROVIDER === "football-data-uk" ||
+    process.env.DATA_PROVIDER === "open-data"
+      ? "football-data-uk"
+      : process.env.DATA_PROVIDER === "football-data"
+        ? "football-data"
+        : "demo",
   demoNotice:
     "Stai usando il dataset DEMO: squadre, partite, giocatori e formazioni sono generati sinteticamente e NON rappresentano dati reali.",
   realNotice:
-    "Dati reali da football-data.org (piano gratuito). Formazioni e indisponibili non sono inclusi nel piano gratuito.",
+    "Dati reali e quote pre-partita/chiusura da fonti pubbliche gratuite (football-data.co.uk, OpenFootball CC0). Formazioni e indisponibili non sono inclusi.",
 } as const;
 
 export const MODEL = {
@@ -68,7 +74,7 @@ export const RISK_PROFILES = {
     maxLegsPerCompetition: 4,
     uncertaintyPenalty: 0.25,
     descriptionNote:
-      "Più incertezza non significa più valore: senza quote non è possibile stimare il valore atteso.",
+      "Più incertezza non significa più valore: le quote, quando disponibili, sono mostrate come contesto di mercato, non come garanzia di rendimento.",
   },
 } as const;
 

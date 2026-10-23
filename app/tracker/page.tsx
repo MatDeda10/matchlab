@@ -121,8 +121,8 @@ export default async function TrackerPage() {
         <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warn" aria-hidden />
         <p>
           Il Brier score misura l&apos;errore quadratico delle probabilità; il log loss penalizza
-          fortemente le previsioni sicure e sbagliate. Nessuno dei due è un rendimento economico. Senza
-          quote storiche non è possibile calcolare un ROI, e MatchLab non lo inventa.
+          fortemente le previsioni sicure e sbagliate. Nessuno dei due è un rendimento economico. Anche
+          quando sono disponibili quote storiche, il tracker non calcola un ROI: MatchLab non lo inventa.
         </p>
       </div>
 

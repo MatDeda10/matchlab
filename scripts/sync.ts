@@ -16,6 +16,8 @@ async function main() {
     competizioni: result.competitions,
     squadre: result.teams,
     partite: result.fixtures,
+    statistiche: result.statistics,
+    quote: result.odds,
   });
   for (const warning of result.warnings) console.warn(`! ${warning}`);
   for (const item of result.unavailable) console.warn(`! ${item}`);

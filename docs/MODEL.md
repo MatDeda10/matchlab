@@ -11,7 +11,9 @@ Tutti i parametri sono in `lib/config/constants.ts` (`MODEL`). Ogni cambiamento 
 
 Per ogni competizione vengono usate le partite `FINISHED` con gol validi, fino alla data di riferimento della partita da stimare (`kickoffUtc`). Questo evita **data leakage**: una partita non usa risultati futuri.
 
-Non vengono inventati 0-0 per partite senza risultato.
+Le partite possono provenire dal dataset DEMO o dal provider reale `football-data-uk` (football-data.co.uk, 3 stagioni configurabili). Non vengono inventati 0-0 per partite senza risultato. Lo snapshot reale incluso nel repository permette di ripetere l'analisi senza rete.
+
+Le quote non sono un input del modello: vengono lette separatamente per il tab Mercato e per il contesto nel generatore.
 
 ## 2. Pesi temporali
 
@@ -144,7 +146,24 @@ score = log P(congiunta) − penalità_incertezza * spread_medio
 6. limite di leg per competizione;
 7. se non ci sono abbastanza gruppi, stato `INSUFFICIENT` con motivi.
 
-Il punteggio di ranking **non è un rendimento atteso**. Senza quote non esiste un valore atteso calcolabile.
+Il punteggio di ranking **non è un rendimento atteso**. Le quote, quando presenti, non entrano nel punteggio e non vengono usate per selezionare le leg.
+
+### 8.1 Quote e mercato (fuori dal modello)
+
+Il tab Mercato e il chip quota del generatore usano solo dati osservati dalla fonte:
+
+```text
+probabilità implicita = 1 / quota_decimale
+overround            = Σ probabilità_implicite − 1
+consenso             = probabilità implicita media, normalizzata a somma 1
+delta                = probabilità_modello − consenso
+```
+
+- `BEST` è la quota più alta tra i bookmaker tracciati, con il nome reale del bookmaker.
+- `AVG` è la media di mercato (colonna `Avg` o media dei bookmaker).
+- Le quote di chiusura sono preferite a quelle pre-partita quando disponibili.
+- Il delta è una differenza descrittiva, **non** un valore atteso, un edge o un consiglio di puntata.
+- MatchLab non calcola ROI, stake, rendimento o convenienza e non gestisce denaro.
 
 ## 9. Valutazione
 
@@ -182,7 +201,9 @@ Le previsioni `OPEN` e `VOID` sono escluse e conteggiate a parte. Con meno di 30
 - Nessun effetto di meteo, arbitri, motivazioni, infortuni dell'ultimo minuto, mercato.
 - Pochi dati → stime instabili; lo shrinkage riduce ma non elimina il problema.
 - Il calcio è un processo a bassa frequenza di eventi: piccoli campioni producono molta varianza.
-- Il modello non è stato validato su dati reali in CI.
+- Lo snapshot reale è disponibile, ma manca ancora un backtest out-of-sample documentato.
+- Le quote non sono live e la copertura varia; non tutti i mercati o le partite hanno una quota.
+- Le quote non vengono usate per correggere λ: modello e mercato restano separati.
 
 ## 12. Come modificare il modello
 

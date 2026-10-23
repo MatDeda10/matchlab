@@ -263,8 +263,8 @@ export default async function DashboardPage() {
       <div className="mt-8">
         <Alert title="Trasparenza sui dati" tone={dataSource.isDemo ? "warn" : "info"}>
           {dataSource.isDemo
-            ? "Tutto ciò che vedi in questa istanza è generato sinteticamente. Non usarlo per decisioni reali. La modalità reale richiede una chiave football-data.org e il comando npm run sync."
-            : "I dati provengono dal piano gratuito di football-data.org e possono essere ritardati. Formazioni e indisponibili non sono inclusi e la UI lo segnala."}
+            ? "Tutto ciò che vedi in questa istanza è generato sinteticamente. Non usarlo per decisioni reali. La modalità reale gratuita si attiva con DATA_PROVIDER=football-data-uk e npm run sync (oppure importando lo snapshot incluso)."
+            : `Dati e quote provengono da ${dataSource.label}; possono essere ritardati e la copertura varia. Le quote sono solo pre-partita/chiusura, non live. Formazioni e indisponibili non sono inclusi e la UI lo segnala.`}
         </Alert>
       </div>
 

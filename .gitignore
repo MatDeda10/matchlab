@@ -10,6 +10,9 @@ coverage/
 data/*.db
 data/*.db-*
 data/.session-secret
+# Lo snapshot pubblicato è il base64 compresso; i formati locali restano fuori dal repo.
+data/real/snapshot.json
+data/real/snapshot.json.gz
 *.tsbuildinfo
 .DS_Store
 Thumbs.db

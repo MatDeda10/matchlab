@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
   },
   // SQL migrations are read from disk at runtime (Docker/standalone included).
   outputFileTracingIncludes: {
-    "/**": ["./db/**/*"],
+    "/**": ["./db/**/*", "./data/real/**/*"],
   },
   async headers() {
     const csp = [

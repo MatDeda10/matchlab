@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
+import { seedRealSnapshotIfEmpty } from "./snapshot";
 
 export type SqlValue = string | number | bigint | null | Uint8Array;
 export type DbRow = Record<string, unknown>;
@@ -81,7 +82,9 @@ export function createDatabase(file = databasePath()): DatabaseSync {
  */
 export function getDb(): DatabaseSync {
   if (!globalForDb.__matchlabDb) {
-    globalForDb.__matchlabDb = createDatabase();
+    const db = createDatabase();
+    seedRealSnapshotIfEmpty(db);
+    globalForDb.__matchlabDb = db;
   }
   return globalForDb.__matchlabDb;
 }
@@ -144,6 +147,7 @@ export function resetDatabase(): void {
     "lineups",
     "player_availability",
     "fixture_statistics",
+    "odds_snapshots",
     "fixtures",
     "players",
     "teams",

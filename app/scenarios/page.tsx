@@ -63,8 +63,8 @@ export default async function ScenariosPage() {
       <div className="mb-5">
         <Alert tone="info" title="Come leggere il confronto">
           Una probabilità congiunta più alta non significa uno scenario “migliore” in assoluto: dipende
-          da quante leg accetti, dalla qualità dei dati e dall&apos;incertezza. Senza quote non esiste un
-          valore atteso calcolabile.
+          da quante leg accetti, dalla qualità dei dati e dall&apos;incertezza. Le quote mostrate sono
+          contesto di mercato, non un valore atteso calcolato.
         </Alert>
       </div>
       <ScenarioBoard scenarios={summaries} timezone={timezone} />

@@ -154,6 +154,7 @@ export class FootballDataOrgProvider implements FootballDataProvider {
     xg: false,
     players: false,
     historicalMatches: true,
+    odds: false,
   };
   readonly limitations = [
     "Piano gratuito: 12 competizioni e 10 richieste/minuto (fonte: pagina prezzi ufficiale).",

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { all, get, run, transaction } from "./index";
+import { all, get, getDb, run, transaction } from "./index";
 import type {
   AvailabilityDto,
   CompetitionDto,
@@ -7,6 +7,9 @@ import type {
   FixtureStatisticsDto,
   FixtureStatus,
   LineupDto,
+  MarketSelectionSummaryDto,
+  MarketSummaryDto,
+  OddsQuoteDto,
   PredictionDto,
   PredictionLegDto,
   PreferencesDto,
@@ -754,10 +757,271 @@ export function deleteUserData(sessionId: string): void {
 }
 
 export function countRows(table: string): number {
-  const allowed = new Set(["fixtures", "teams", "players", "competitions", "predictions", "scenarios"]);
+  const allowed = new Set([
+    "fixtures",
+    "teams",
+    "players",
+    "competitions",
+    "fixture_statistics",
+    "odds_snapshots",
+    "predictions",
+    "scenarios",
+  ]);
   if (!allowed.has(table)) throw new Error("Tabella non consentita");
   const row = get<{ count: number }>(`SELECT COUNT(*) AS count FROM ${table}`);
   return row?.count ?? 0;
+}
+
+const ODDS_MARKETS: Array<{ id: string; label: string; selections: string[] }> = [
+  { id: "1X2", label: "Esito finale (1X2)", selections: ["HOME", "DRAW", "AWAY"] },
+  { id: "OU25", label: "Over/Under 2.5", selections: ["OVER", "UNDER"] },
+];
+
+const ODDS_SELECTION_LABELS: Record<string, string> = {
+  "1X2:HOME": "Vittoria casa",
+  "1X2:DRAW": "Pareggio",
+  "1X2:AWAY": "Vittoria ospite",
+  "OU25:OVER": "Over 2.5",
+  "OU25:UNDER": "Under 2.5",
+};
+
+interface OddsRow {
+  id: string;
+  fixture_id: string;
+  provider: string;
+  source: string;
+  market_id: string;
+  selection_id: string;
+  bookmaker: string;
+  bookmaker_label: string;
+  odds_decimal: number;
+  is_closing: number;
+  fetched_at: string;
+}
+
+function mapOdds(row: OddsRow): OddsQuoteDto {
+  return {
+    id: row.id,
+    fixtureId: row.fixture_id,
+    provider: row.provider,
+    source: row.source,
+    marketId: row.market_id,
+    selectionId: row.selection_id,
+    bookmaker: row.bookmaker,
+    bookmakerLabel: row.bookmaker_label,
+    odds: row.odds_decimal,
+    isClosing: row.is_closing === 1,
+    fetchedAt: row.fetched_at,
+  };
+}
+
+const ODDS_SELECT = `
+  SELECT id, fixture_id, provider, source, market_id, selection_id, bookmaker,
+         bookmaker_label, odds_decimal, is_closing, fetched_at
+  FROM odds_snapshots
+`;
+
+export function listOddsForFixture(fixtureId: string): OddsQuoteDto[] {
+  return all<OddsRow>(`${ODDS_SELECT} WHERE fixture_id = ? ORDER BY market_id, selection_id, is_closing, odds_decimal DESC`, fixtureId).map(mapOdds);
+}
+
+export function listOddsForFixtures(fixtureIds: string[]): OddsQuoteDto[] {
+  if (fixtureIds.length === 0) return [];
+  const placeholders = fixtureIds.map(() => "?").join(",");
+  return all<OddsRow>(
+    `${ODDS_SELECT} WHERE fixture_id IN (${placeholders}) ORDER BY fixture_id, market_id, selection_id, is_closing, odds_decimal DESC`,
+    ...fixtureIds,
+  ).map(mapOdds);
+}
+
+function insertOddsQuotes(quotes: OddsQuoteDto[]): number {
+  if (quotes.length === 0) return 0;
+  const statement = getDb().prepare(
+    `INSERT INTO odds_snapshots
+       (id, fixture_id, provider, source, market_id, selection_id, bookmaker, bookmaker_label,
+        odds_decimal, is_closing, fetched_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(fixture_id, market_id, selection_id, bookmaker, is_closing, source)
+     DO UPDATE SET
+       id = excluded.id,
+       provider = excluded.provider,
+       bookmaker_label = excluded.bookmaker_label,
+       odds_decimal = excluded.odds_decimal,
+       fetched_at = excluded.fetched_at`,
+  );
+  for (const quote of quotes) {
+    statement.run(
+      quote.id,
+      quote.fixtureId,
+      quote.provider,
+      quote.source,
+      quote.marketId,
+      quote.selectionId,
+      quote.bookmaker,
+      quote.bookmakerLabel,
+      quote.odds,
+      quote.isClosing ? 1 : 0,
+      quote.fetchedAt,
+    );
+  }
+  return quotes.length;
+}
+
+export function upsertOddsQuotes(quotes: OddsQuoteDto[]): number {
+  return transaction(() => insertOddsQuotes(quotes));
+}
+
+export function replaceOddsForProvider(provider: string, quotes: OddsQuoteDto[]): number {
+  return transaction(() => {
+    run("DELETE FROM odds_snapshots WHERE provider = ?", provider);
+    return insertOddsQuotes(quotes);
+  });
+}
+
+function average(values: number[]): number | null {
+  if (values.length === 0) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+export function summarizeMarket(
+  fixtureId: string,
+  market: { id: string; label: string; selections: string[] },
+  quotes: OddsQuoteDto[],
+  modelMap?: Record<string, number>,
+): MarketSummaryDto | null {
+  const marketQuotes = quotes.filter((quote) => quote.marketId === market.id);
+  if (marketQuotes.length === 0) return null;
+  const closing = marketQuotes.some((quote) => quote.isClosing);
+  const selected = marketQuotes.filter((quote) => quote.isClosing === closing);
+
+  const summaries: MarketSelectionSummaryDto[] = market.selections.map((selectionId) => {
+    const selectionQuotes = selected.filter((quote) => quote.selectionId === selectionId);
+    const named = selectionQuotes.filter(
+      (quote) => quote.bookmaker !== "MAX" && quote.bookmaker !== "AVG",
+    );
+    const namedBest = named.sort((left, right) => right.odds - left.odds)[0] ?? null;
+    const maxQuote = selectionQuotes.find((quote) => quote.bookmaker === "MAX") ?? null;
+    const best =
+      maxQuote && (!namedBest || maxQuote.odds > namedBest.odds) ? maxQuote : namedBest;
+    const avgQuote = selectionQuotes.find((quote) => quote.bookmaker === "AVG") ?? null;
+    const averageOdds = avgQuote?.odds ?? average(named.map((quote) => quote.odds));
+    const impliedProbability = best ? 1 / best.odds : null;
+    const consensusProbability = averageOdds ? 1 / averageOdds : null;
+    const modelProbability = modelMap?.[`${market.id}:${selectionId}`] ?? null;
+    return {
+      selectionId,
+      label: ODDS_SELECTION_LABELS[`${market.id}:${selectionId}`] ?? selectionId,
+      best,
+      averageOdds,
+      impliedProbability,
+      consensusProbability,
+      modelProbability,
+      delta:
+        modelProbability !== null && consensusProbability !== null
+          ? modelProbability - consensusProbability
+          : null,
+      quoteCount: named.length,
+    };
+  });
+
+  const consensusTotal = summaries.reduce(
+    (sum, item) => sum + (item.consensusProbability ?? 0),
+    0,
+  );
+  if (consensusTotal > 0) {
+    for (const summary of summaries) {
+      if (summary.consensusProbability === null) continue;
+      const normalized = summary.consensusProbability / consensusTotal;
+      summary.consensusProbability = normalized;
+      summary.delta =
+        summary.modelProbability !== null ? summary.modelProbability - normalized : null;
+    }
+  }
+
+  const bestOverround = summaries.every((item) => item.best)
+    ? summaries.reduce((sum, item) => sum + 1 / (item.best?.odds ?? 1), 0) - 1
+    : null;
+  const consensusOverround = summaries.every((item) => item.averageOdds)
+    ? summaries.reduce((sum, item) => sum + 1 / (item.averageOdds ?? 1), 0) - 1
+    : null;
+
+  return {
+    fixtureId,
+    marketId: market.id,
+    label: market.label,
+    closing,
+    selections: summaries,
+    bestOverround,
+    consensusOverround,
+    quoteCount: summaries.reduce((sum, item) => sum + item.quoteCount, 0),
+    updatedAt:
+      selected.map((quote) => quote.fetchedAt).sort((left, right) => right.localeCompare(left))[0] ??
+      null,
+    sources: [...new Set(selected.map((quote) => quote.source))],
+  };
+}
+
+export function getMarketSummariesForFixture(
+  fixtureId: string,
+  modelMap?: Record<string, number>,
+): MarketSummaryDto[] {
+  const quotes = listOddsForFixture(fixtureId);
+  return ODDS_MARKETS.map((market) => summarizeMarket(fixtureId, market, quotes, modelMap)).filter(
+    (market): market is MarketSummaryDto => market !== null,
+  );
+}
+
+export interface BestOddsSummary {
+  odds: number;
+  bookmaker: string;
+  bookmakerLabel: string;
+  impliedProbability: number;
+  consensusProbability: number | null;
+  overround: number | null;
+  closing: boolean;
+  source: string;
+}
+
+/**
+ * Restituisce la migliore quota disponibile per ogni selezione, preferendo le
+ * quote di chiusura quando presenti. Il generatore la usa come contesto:
+ * non modifica la probabilità del modello.
+ */
+export function getBestOddsForFixtures(
+  fixtureIds: string[],
+): Map<string, Map<string, BestOddsSummary>> {
+  const result = new Map<string, Map<string, BestOddsSummary>>();
+  if (fixtureIds.length === 0) return result;
+  const quotes = listOddsForFixtures(fixtureIds);
+  const byFixture = new Map<string, OddsQuoteDto[]>();
+  for (const quote of quotes) {
+    const list = byFixture.get(quote.fixtureId) ?? [];
+    list.push(quote);
+    byFixture.set(quote.fixtureId, list);
+  }
+
+  for (const [fixtureId, fixtureQuotes] of byFixture) {
+    const marketMap = new Map<string, BestOddsSummary>();
+    for (const market of ODDS_MARKETS) {
+      const summary = summarizeMarket(fixtureId, market, fixtureQuotes);
+      if (!summary) continue;
+      for (const selection of summary.selections) {
+        if (!selection.best || selection.best.odds <= 1) continue;
+        marketMap.set(`${market.id}:${selection.selectionId}`, {
+          odds: selection.best.odds,
+          bookmaker: selection.best.bookmaker,
+          bookmakerLabel: selection.best.bookmakerLabel,
+          impliedProbability: selection.impliedProbability ?? 1 / selection.best.odds,
+          consensusProbability: selection.consensusProbability,
+          overround: summary.consensusOverround,
+          closing: summary.closing,
+          source: selection.best.source,
+        });
+      }
+    }
+    if (marketMap.size > 0) result.set(fixtureId, marketMap);
+  }
+  return result;
 }
 
 export function getCache<T>(key: string): { payload: T; fetchedAt: string; ttlSeconds: number } | null {

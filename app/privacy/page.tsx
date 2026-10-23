@@ -138,8 +138,9 @@ export default function PrivacyPage() {
         <div className="flex items-start gap-2 rounded-xl border border-line bg-surface2/20 p-3 text-[10px] leading-relaxed text-muted">
           <Lock className="mt-0.5 size-3.5 shrink-0 text-ok" aria-hidden />
           <p>
-            Nessuna vendita di dati, nessun trasferimento a terzi per marketing. Il provider dati
-            (football-data.org) riceve solo le richieste API del server, non i dati degli utenti.
+            Nessuna vendita di dati, nessun trasferimento a terzi per marketing. Le fonti dati
+            (football-data.co.uk, OpenFootball o football-data.org se configurato) ricevono solo le
+            richieste del server, non i dati degli utenti.
           </p>
         </div>
       </div>

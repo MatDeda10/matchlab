@@ -4,6 +4,7 @@ import type {
   FixtureDto,
   FixtureStatisticsDto,
   LineupDto,
+  OddsQuoteDto,
   TeamDto,
 } from "@/lib/db/types";
 
@@ -18,6 +19,7 @@ export interface ProviderCapabilities {
   xg: boolean;
   players: boolean;
   historicalMatches: boolean;
+  odds: boolean;
 }
 
 export interface ProviderMeta {
@@ -37,6 +39,20 @@ export interface FixtureQuery {
   competitionCodes?: string[];
 }
 
+/**
+ * Payload bulk per la sincronizzazione.
+ * I provider che possono restituire statistiche e quote in un solo passaggio
+ * implementano `getSyncBundle`; gli altri continuano a usare l'interfaccia
+ * minimale (solo calendario/risultati).
+ */
+export interface ProviderSyncBundle {
+  competitions: CompetitionDto[];
+  teams: TeamDto[];
+  fixtures: FixtureDto[];
+  statistics: FixtureStatisticsDto[];
+  odds: OddsQuoteDto[];
+}
+
 export interface FootballDataProvider {
   readonly id: string;
   readonly label: string;
@@ -45,6 +61,7 @@ export interface FootballDataProvider {
   readonly limitations: string[];
   readonly quotaNote: string;
 
+  getSyncBundle?(): Promise<ProviderResult<ProviderSyncBundle>>;
   getCompetitions(): Promise<ProviderResult<CompetitionDto[]>>;
   getFixtures(query: FixtureQuery): Promise<ProviderResult<FixtureDto[]>>;
   getFixtureDetails(id: string): Promise<ProviderResult<FixtureDto>>;

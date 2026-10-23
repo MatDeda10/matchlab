@@ -1,4 +1,5 @@
 import { FootballDataOrgProvider } from "./football-data";
+import { FootballDataUkProvider } from "./football-data-uk";
 import { DemoProvider } from "./demo";
 import type { FootballDataProvider } from "./provider";
 
@@ -45,6 +46,11 @@ export function getDataSource(): DataSourceInfo {
       warnings,
       true,
     );
+    return cached;
+  }
+
+  if (requested === "football-data-uk" || requested === "open-data") {
+    cached = build(new FootballDataUkProvider(), requested, true, warnings, Boolean(key));
     return cached;
   }
 

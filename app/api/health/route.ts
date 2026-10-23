@@ -16,7 +16,7 @@ export async function GET() {
         model: MODEL.version,
         provider: {
           requested: DATA_SOURCE.provider,
-          active: source.isDemo ? "demo" : "football-data",
+          active: source.provider.id,
           configured: source.configured,
           capabilities: source.capabilities,
         },
@@ -24,6 +24,8 @@ export async function GET() {
           fixtures: countRows("fixtures"),
           teams: countRows("teams"),
           competitions: countRows("competitions"),
+          statistics: countRows("fixture_statistics"),
+          odds: countRows("odds_snapshots"),
           predictions: countRows("predictions"),
           scenarios: countRows("scenarios"),
         },

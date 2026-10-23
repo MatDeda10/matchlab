@@ -119,6 +119,18 @@ export interface FixturePrediction {
   };
 }
 
+/** Contesto di mercato per una selezione. Non entra nel calcolo delle probabilità. */
+export interface SelectionMarketContext {
+  odds: number;
+  bookmaker: string;
+  bookmakerLabel: string;
+  impliedProbability: number;
+  consensusProbability: number | null;
+  overround: number | null;
+  closing: boolean;
+  source: string;
+}
+
 export interface SelectionCandidate {
   fixtureId: string;
   competitionId: string;
@@ -134,6 +146,7 @@ export interface SelectionCandidate {
   quality: DataQuality;
   interval: ProbabilityInterval | null;
   modelVersion: string;
+  market: SelectionMarketContext | null;
 }
 
 export type ProposalStatus = "OK" | "INSUFFICIENT";
@@ -150,6 +163,8 @@ export interface ProposalLeg {
   probability: number;
   qualityScore: number;
   uncertainty: ProbabilityInterval | null;
+  /** Quota migliore disponibile al momento della generazione, se la fonte la fornisce. */
+  market: SelectionMarketContext | null;
   rationale: string;
   alternatives: Array<{
     selectionId: string;

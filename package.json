@@ -18,6 +18,8 @@
     "db:seed": "tsx scripts/db.ts seed",
     "db:reset": "tsx scripts/db.ts reset",
     "db:status": "tsx scripts/db.ts status",
+    "db:seed:real": "tsx scripts/db.ts seed-real",
+    "data:snapshot": "tsx scripts/snapshot.ts",
     "sync": "tsx scripts/sync.ts",
     "backtest": "tsx scripts/backtest.ts"
   },

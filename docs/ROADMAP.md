@@ -18,18 +18,23 @@ La roadmap è ordinata per valore reale, non per numero di funzionalità. Ogni v
 - [x] Tracker con Brier, log loss, calibrazione, risoluzione e annullamento
 - [x] Sessione anonima firmata, CSRF, body limit, rate limit
 - [x] Provider astratto + adapter football-data.org con cache/retry/timeout
+- [x] Provider reale gratuito `football-data-uk`: CSV football-data.co.uk + calendario OpenFootball, senza chiave API
+- [x] Snapshot reale compresso e importabile senza rete
+- [x] Statistiche di partita (tiri, tiri in porta, possesso, xG quando presente)
+- [x] Quote 1X2 e Over/Under 2.5 pre-partita/chiusura, sintesi `BEST` + `AVG`
+- [x] Tab Mercato con probabilità implicita, consenso, delta e overround
 - [x] API route con validazione Zod
 - [x] Pagine metodologia, fonti, privacy, termini
-- [x] Test del motore con Vitest
+- [x] Test del motore e della pipeline dati con Vitest
 - [x] Docker con volume persistente e seed al primo avvio
 - [x] Documentazione tecnica
 
 ## Prossimo (priorità alta)
 
 - [ ] **Test end-to-end Playwright** su flussi reali: filtro partite, registrazione previsione, generazione scenario, salvataggio, risoluzione, cancellazione dati.
-- [ ] **Validazione del provider reale** con una chiave API: mappatura stati, fusi orari, partite rinviate, risultati mancanti.
 - [ ] **Backtest onesto su dati reali**: split temporale, baseline (frequenze di competizione), metriche per mercato, intervalli bootstrap.
 - [ ] **Aggiornamento automatico dello stato partite**: passaggio SCHEDULED → IN_PLAY → FINISHED senza intervento manuale, con timestamp della fonte.
+- [ ] **Copertura quote più ampia**: valutare una seconda fonte keyless per serie minori e mercati aggiuntivi, senza quote live.
 - [ ] **Migrazione a Postgres opzionale**: adapter repository per deploy serverless, senza cambiare il motore.
 - [ ] **CSP con nonce** al posto di `unsafe-inline`.
 
@@ -56,12 +61,15 @@ La roadmap è ordinata per valore reale, non per numero di funzionalità. Ogni v
 
 ## Esplicitamente fuori scope
 
-- Quote, odds, scommesse, depositi, prelievi.
-- Suggerimenti di puntata, stake, ROI, "value bet".
+- Scommesse, depositi, prelievi, piazzamento di puntate.
+- Quote live o in-play, mercati derivati e cash-out.
+- Suggerimenti di puntata, stake, ROI, "value bet" o affiliazioni a bookmaker.
 - Marketing che prometta vincite o urgenza.
 - LLM che generi probabilità.
 - Raccolta di dati personali non necessari.
 - Qualsiasi funzione che faciliti l'inseguimento delle perdite.
+
+Le quote pre-partita/chiusura sono mostrate solo come contesto informativo della fonte pubblica, senza link, bonus o promozioni.
 
 ## Come contribuire
 

@@ -19,9 +19,11 @@ export default function TermsPage() {
           <SectionHeading title="1. Natura del servizio" />
           <p className="text-xs leading-relaxed text-muted">
             MatchLab fornisce stime probabilistiche, scenari combinati e strumenti di valutazione della
-            calibrazione. Non accetta depositi, non gestisce denaro, non offre quote e non consente di
-            piazzare scommesse. Nessuna funzione dell&apos;app costituisce un consiglio di scommessa,
-            finanziario o di investimento.
+            calibrazione. Non accetta depositi, non gestisce denaro e non consente di piazzare scommesse.
+            Le quote eventualmente mostrate sono dati di mercato provenienti dalla fonte pubblica
+            indicata, riportati solo come contesto informativo: non sono offerte, non sono live e non
+            costituiscono promozione di bookmaker o invito al gioco. Nessuna funzione dell&apos;app
+            costituisce un consiglio di scommessa, finanziario o di investimento.
           </p>
         </Card>
 

@@ -36,6 +36,7 @@ export class DemoProvider implements FootballDataProvider {
     xg: true,
     players: true,
     historicalMatches: true,
+    odds: false,
   };
   readonly limitations = [
     "Tutti i dati sono generati sinteticamente: nessuna squadra, partita o statistica è reale.",

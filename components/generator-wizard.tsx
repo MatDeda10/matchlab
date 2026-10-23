@@ -142,7 +142,7 @@ export function GeneratorWizard({
       <Card className="p-4 sm:p-5">
         <SectionHeading
           title="Configurazione"
-          description="Il generatore usa solo probabilità calcolate dal server. Nessuna quota, nessun importo reale."
+          description="Il generatore usa probabilità calcolate dal server. Le quote, quando disponibili, sono mostrate come contesto di mercato: non modificano le stime."
           action={isDemo ? <DemoBadge /> : null}
         />
 
@@ -485,9 +485,9 @@ export function GeneratorWizard({
       <div className="flex items-start gap-2 rounded-xl border border-warn/20 bg-warn/5 p-3 text-[10px] leading-relaxed text-warn">
         <ShieldAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
         <p>
-          Questi scenari non sono raccomandazioni di scommessa e non includono quote. Senza quote
-          storiche non è possibile stimare un valore atteso o un ROI. Non aumentare le puntate dopo una
-          perdita.
+          Questi scenari non sono raccomandazioni di scommessa. Le quote mostrate sono pre-partita o di
+          chiusura, non live, e provengono dalla fonte indicata: non calcoliamo ROI, valore atteso o
+          convenienza. Non aumentare le puntate dopo una perdita.
         </p>
       </div>
     </div>
@@ -508,6 +508,13 @@ function ContextBanner({ context }: { context: GeneratorContext }) {
         </Badge>
         <Badge tone="neutral">{context.fixturesFound} partite nel periodo</Badge>
         <Badge tone="neutral">{context.fixturesEvaluated} valutate</Badge>
+        {context.oddsEnabled ? (
+          <Badge tone={context.fixturesWithOdds > 0 ? "ok" : "warn"}>
+            Quote: {context.fixturesWithOdds}/{context.fixturesFound}
+          </Badge>
+        ) : (
+          <Badge tone="neutral">Quote non disponibili</Badge>
+        )}
         <Badge tone="neutral">{context.profileLabel}</Badge>
         {context.isDemo ? <DemoBadge /> : null}
         <span className="text-faint">
@@ -535,6 +542,26 @@ function LegRow({ leg, timezone }: { leg: ProposalLeg; timezone: string }) {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {leg.market ? (
+            <div className="rounded-xl border border-ok/25 bg-ok/5 px-2.5 py-1.5 text-right">
+              <p className="text-[9px] font-medium uppercase tracking-wide text-ok">
+                Quota migliore
+              </p>
+              <p className="tnum text-sm font-semibold text-ok">
+                {leg.market.odds.toFixed(2)} · {leg.market.bookmakerLabel}
+              </p>
+              <p className="text-[9px] text-faint">
+                implicita {formatPercent(leg.market.impliedProbability)} ·{" "}
+                {leg.market.closing ? "chiusura" : "pre-partita"}
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-line bg-surface2/40 px-2.5 py-1.5 text-right">
+              <p className="text-[9px] font-medium uppercase tracking-wide text-faint">Quota</p>
+              <p className="text-[11px] font-medium text-muted">Non disponibile</p>
+              <p className="text-[9px] text-faint">nessun dato inventato</p>
+            </div>
+          )}
           <div className="text-right">
             <p className="tnum text-sm font-semibold">{formatPercent(leg.probability)}</p>
             <p className="text-[10px] text-faint">

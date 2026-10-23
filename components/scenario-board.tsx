@@ -248,6 +248,14 @@ export function ScenarioBoard({
                           {leg.marketLabel} · {leg.selectionLabel} ·{" "}
                           <span className="tnum font-semibold">{formatPercent(leg.probability)}</span>
                         </p>
+                        {leg.market ? (
+                          <p className="mt-0.5 text-[9px] text-ok">
+                            Quota migliore {leg.market.odds.toFixed(2)} · {leg.market.bookmakerLabel} ·{" "}
+                            {leg.market.closing ? "chiusura" : "pre-partita"}
+                          </p>
+                        ) : (
+                          <p className="mt-0.5 text-[9px] text-faint">Quota non disponibile</p>
+                        )}
                       </li>
                     ))}
                   </ul>

@@ -143,6 +143,45 @@ export interface PreferencesDto {
   updatedAt: string;
 }
 
+export interface OddsQuoteDto {
+  id: string;
+  fixtureId: string;
+  provider: string;
+  source: string;
+  marketId: string;
+  selectionId: string;
+  bookmaker: string;
+  bookmakerLabel: string;
+  odds: number;
+  isClosing: boolean;
+  fetchedAt: string;
+}
+
+export interface MarketSelectionSummaryDto {
+  selectionId: string;
+  label: string;
+  best: OddsQuoteDto | null;
+  averageOdds: number | null;
+  impliedProbability: number | null;
+  consensusProbability: number | null;
+  modelProbability: number | null;
+  delta: number | null;
+  quoteCount: number;
+}
+
+export interface MarketSummaryDto {
+  fixtureId: string;
+  marketId: string;
+  label: string;
+  closing: boolean;
+  selections: MarketSelectionSummaryDto[];
+  bestOverround: number | null;
+  consensusOverround: number | null;
+  quoteCount: number;
+  updatedAt: string | null;
+  sources: string[];
+}
+
 export interface StandingsRow {
   position: number;
   teamId: string;

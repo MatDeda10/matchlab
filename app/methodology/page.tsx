@@ -140,7 +140,8 @@ export default function MethodologyPage() {
           </div>
           <p className="mt-3 text-[11px] leading-relaxed text-faint">
             Il punteggio di ranking combina probabilità, qualità e incertezza. Non è un rendimento atteso:
-            senza quote non è possibile calcolare un valore atteso.
+            le quote mostrate separatamente non vengono usate per selezionare le leg né per calcolare un
+            valore atteso.
           </p>
         </Card>
 
@@ -168,11 +169,16 @@ export default function MethodologyPage() {
                 inventate). Nessun dato reale.
               </li>
               <li>
-                Provider reale opzionale: football-data.org v4, piano gratuito. Include calendario e
-                risultati; <strong>non</strong> include formazioni, indisponibili o xG nel piano
-                gratuito.
+                Modalità reale gratuita: football-data.co.uk (risultati, statistiche disponibili e quote
+                pre-partita/chiusura) + OpenFootball CC0 (calendario futuro). Nessuna chiave API.
               </li>
-              <li>Nessun dato di quote: MatchLab non mostra e non inventa quote.</li>
+              <li>
+                Le quote sono solo dati osservati dalla fonte. Non sono live, non vengono interpolate e
+                non entrano nel modello. I nomi dei bookmaker sono attribuzione, senza link o promozioni.
+              </li>
+              <li>
+                Formazioni, indisponibili e rose non sono incluse: la UI le mostra come non disponibili.
+              </li>
               <li>
                 Il modello non conosce meteo, arbitri, motivazioni, mercato, notizie dell&apos;ultima ora
                 o cambi di allenatore.

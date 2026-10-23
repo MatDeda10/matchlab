@@ -52,7 +52,7 @@ export function explainScenario(
     `Lo scenario contiene ${legs.length} selezioni su ${fixtures} partite distinte.`,
     `La probabilità congiunta stimata è ${formatPercent(jointProbability)} assumendo indipendenza condizionata tra le partite.`,
     `La selezione più fragile ha probabilità ${formatPercent(weakestLegProbability)}: è il principale limite dello scenario.`,
-    "La probabilità congiunta non è una previsione di vincita e non considera quote, margine del bookmaker o disponibilità di mercato.",
+    "La probabilità congiunta non è una previsione di vincita. Le quote, quando mostrate, sono un contesto di mercato separato e non entrano nel calcolo.",
   ].join(" ");
 }
 
@@ -63,7 +63,7 @@ export function scenarioRationale(proposal: ScenarioProposal): string {
     `Combinazione selezionata massimizzando il punteggio dichiarato (probabilità congiunta, qualità del dato e sensibilità), non la sola probabilità.`,
     weakest ? `Leg più incerta: ${weakest.fixtureLabel} (${formatPercent(weakest.probability)}).` : "",
     `Qualità media ${Math.round(quality)}/100; copertura minima ${proposal.worstQuality}/100.`,
-    "Nessuna quota è stata utilizzata: non è possibile stimare valore atteso o convenienza.",
+    "Le quote non sono usate per selezionare le leg e non calcoliamo valore atteso, ROI o convenienza.",
   ]
     .filter(Boolean)
     .join(" ");

@@ -11,6 +11,7 @@ const CAPABILITY_LABELS: Array<[keyof DataSourceInfo["capabilities"], string]> =
   ["playerAvailability", "Indisponibili"],
   ["matchStatistics", "Statistiche"],
   ["xg", "xG"],
+  ["odds", "Quote"],
 ];
 
 export function DataSourceCard({ dataSource }: { dataSource: DataSourceInfo }) {

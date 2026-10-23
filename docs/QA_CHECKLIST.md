@@ -36,14 +36,21 @@ Checklist da eseguire prima di una release. Non sostituisce i test automatici.
 - [ ] DEMO etichettato ovunque.
 - [ ] Formazioni: distinzione OFFICIAL / PROBABLE / MODEL.
 - [ ] Dati mancanti mostrati come non disponibili.
-- [ ] Nessuna quota, nessun ROI, nessuna promessa.
+- [ ] Quote mancanti mostrate come “non disponibile”, mai inventate o interpolate.
+- [ ] Quote chiaramente indicate come pre-partita o di chiusura, non live.
+- [ ] Bookmaker mostrati solo come attribuzione: nessun link, logo, bonus o codice affiliato.
+- [ ] Nessun ROI, valore atteso, stake o promessa di rendimento.
 - [ ] Previsioni concluse non mostrate come live.
 - [ ] Disclaimer presente nelle pagine principali.
 
 ## Flussi
 
 - [ ] Filtro partite per data, squadra, competizione, stato.
+- [ ] Dettaglio partita: tab Mercato con quote, probabilità implicita, consenso e overround.
+- [ ] Generatore: chip quota migliore con bookmaker; fallback “non disponibile”.
 - [ ] Registrazione previsione → tracker → annullamento prima del kickoff.
 - [ ] Generazione scenario → salvataggio → confronto → eliminazione.
 - [ ] Modifica preferenze → ricarica → persistenza.
 - [ ] Eliminazione dati → cookie invalidato → dati assenti.
+- [ ] `npm run db:seed:real` su DB vuoto → dashboard e pagine popolate.
+- [ ] Avvio con DB vuoto e `DATA_PROVIDER=football-data-uk` → snapshot importato senza rete.

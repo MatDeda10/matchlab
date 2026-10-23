@@ -1,10 +1,19 @@
 import { MARKETS, MODEL, RISK_PROFILES, type MarketId, type RiskProfileId } from "@/lib/config/constants";
 import { getDataSource } from "@/lib/api";
-import { listCompetitions, listFixtures } from "@/lib/db/repositories";
+import {
+  getBestOddsForFixtures,
+  listCompetitions,
+  listFixtures,
+  type BestOddsSummary,
+} from "@/lib/db/repositories";
 import type { FixtureDto } from "@/lib/db/types";
 import { generateProposals } from "@/engine/combination";
 import { marketKey, MARKET_SELECTIONS, selectionLabel } from "@/engine/markets";
-import type { GenerationResult, SelectionCandidate } from "@/engine/types";
+import type {
+  GenerationResult,
+  SelectionCandidate,
+  SelectionMarketContext,
+} from "@/engine/types";
 import { predictScheduledFixture } from "./model";
 
 export interface GeneratorInput {
@@ -27,6 +36,8 @@ export interface GeneratorContext {
   competitionNames: string[];
   fixturesFound: number;
   fixturesEvaluated: number;
+  fixturesWithOdds: number;
+  oddsEnabled: boolean;
   budget: number | null;
   profileLabel: string;
   isDemo: boolean;
@@ -47,6 +58,20 @@ function isInsufficientCandidate(
     fixtureId: fixture.id,
     fixtureLabel: `${fixture.homeTeamName} – ${fixture.awayTeamName}`,
     reason,
+  };
+}
+
+function toMarketContext(summary: BestOddsSummary | undefined): SelectionMarketContext | null {
+  if (!summary) return null;
+  return {
+    odds: summary.odds,
+    bookmaker: summary.bookmaker,
+    bookmakerLabel: summary.bookmakerLabel,
+    impliedProbability: summary.impliedProbability,
+    consensusProbability: summary.consensusProbability,
+    overround: summary.overround,
+    closing: summary.closing,
+    source: summary.source,
   };
 }
 
@@ -73,6 +98,8 @@ export function runGeneration(input: GeneratorInput, now = new Date()): Generato
   const candidates: SelectionCandidate[] = [];
   const excluded: Array<{ fixtureId: string; fixtureLabel: string; reason: string }> = [];
   let evaluated = 0;
+  const oddsByFixture = getBestOddsForFixtures(fixtures.map((fixture) => fixture.id));
+  const fixturesWithOdds = oddsByFixture.size;
 
   for (const fixture of fixtures) {
     const prediction = predictScheduledFixture(fixture, { now, withUncertainty: true });
@@ -111,6 +138,7 @@ export function runGeneration(input: GeneratorInput, now = new Date()): Generato
           quality: prediction.prediction.quality,
           interval: prediction.prediction.uncertainty[key] ?? null,
           modelVersion: prediction.prediction.modelVersion,
+          market: toMarketContext(oddsByFixture.get(fixture.id)?.get(key)),
         });
       }
     }
@@ -135,7 +163,7 @@ export function runGeneration(input: GeneratorInput, now = new Date()): Generato
   }
   if (input.budget !== null) {
     warnings.push(
-      "Il budget è solo informativo: non modifica probabilità, selezione o numero di eventi. Non è possibile stimare un valore atteso senza quote.",
+      "Il budget è solo informativo: non modifica probabilità, selezione o numero di eventi. Non calcoliamo puntate, ROI o valore atteso.",
     );
   }
   if (!dataSource.capabilities.lineups) {
@@ -143,8 +171,21 @@ export function runGeneration(input: GeneratorInput, now = new Date()): Generato
       "Formazioni e indisponibili non sono disponibili con questo provider: il modello usa solo i risultati storici.",
     );
   }
+  if (dataSource.capabilities.odds) {
+    if (fixturesWithOdds === 0) {
+      warnings.push(
+        "La fonte non ha quote per le partite di questo intervallo: le leg restano senza quota e senza confronto di mercato.",
+      );
+    } else {
+      warnings.push(
+        `Quote disponibili per ${fixturesWithOdds} partite su ${fixtures.length}: quando mancano, la UI mostra “quota non disponibile”.`,
+      );
+    }
+  } else {
+    warnings.push("Questo provider non espone quote: nessuna quota viene mostrata o simulata.");
+  }
   warnings.push(
-    "Nessuna quota è stata utilizzata. Non viene calcolato ROI, rendimento atteso o convenienza.",
+    "Il modello non usa le quote: probabilità e mercato restano separati. Non viene calcolato ROI, rendimento atteso o convenienza.",
   );
 
   return {
@@ -160,6 +201,8 @@ export function runGeneration(input: GeneratorInput, now = new Date()): Generato
       competitionNames,
       fixturesFound: fixtures.length,
       fixturesEvaluated: evaluated,
+      fixturesWithOdds,
+      oddsEnabled: dataSource.capabilities.odds,
       budget: input.budget,
       profileLabel: profile.label,
       isDemo: dataSource.isDemo,

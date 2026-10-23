@@ -35,6 +35,7 @@ function candidatesFor(fixtures: number, probability = 0.6): SelectionCandidate[
         quality: quality(),
         interval: { p10: p - 0.05, p50: p, p90: p + 0.05, spread: 0.1, samples: 400 },
         modelVersion: "test",
+        market: null,
       });
     }
   }

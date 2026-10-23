@@ -18,6 +18,7 @@ const CAPABILITIES: Array<[keyof ReturnType<typeof getDataSource>["capabilities"
   ["xg", "Expected goals (xG)"],
   ["players", "Anagrafica giocatori"],
   ["historicalMatches", "Storico partite"],
+  ["odds", "Quote pre-partita/chiusura"],
 ];
 
 export default function SourcesPage() {
@@ -80,35 +81,55 @@ export default function SourcesPage() {
           </Card>
 
           <Card className="p-5">
-            <SectionHeading title="football-data.org v4 (opzionale)" />
+            <SectionHeading title="Modalità reale gratuita (consigliata)" />
             <p className="text-xs leading-relaxed text-muted">
-              Provider reale gratuito per calendario e risultati delle principali competizioni europee.
-              Richiede una chiave API personale. Il piano gratuito ha un limite dichiarato di 10 richieste
-              al minuto ed espone i risultati con un ritardo; le competizioni disponibili dipendono dal
-              piano e possono cambiare nel tempo.
+              La configurazione <code>DATA_PROVIDER=football-data-uk</code> usa solo fonti pubbliche
+              senza chiave API:
             </p>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-relaxed text-muted">
-              <li>Formazioni, indisponibili, xG e statistiche avanzate non sono inclusi nel piano gratuito.</li>
               <li>
-                L&apos;adapter usa cache su SQLite (6 ore), rate limit locale prudente (8 richieste/minuto),
-                timeout, retry con backoff e messaggi espliciti di indisponibilità.
+                <strong>football-data.co.uk</strong> per risultati storici, statistiche disponibili
+                (tiri, tiri in porta, xG) e quote 1X2 / Over-Under 2.5 pre-partita e di chiusura.
               </li>
               <li>
-                Se la chiave manca o la fonte fallisce, l&apos;app mostra l&apos;errore o ricade sul
-                dataset DEMO in modo dichiarato: non simula dati reali.
+                <strong>OpenFootball</strong> (CC0) per completare il calendario della stagione corrente,
+                soprattutto le partite future.
+              </li>
+              <li>
+                Competizioni: Serie A, Premier League, Championship, LaLiga, Bundesliga, Ligue 1.
               </li>
             </ul>
             <p className="mt-2 text-[11px] leading-relaxed text-faint">
+              Le quote sono solo quelle presenti nei CSV: nessuna quota live, nessuna interpolazione e
+              nessuna quota “simulata”. La copertura varia per partita e competizione. I nomi dei
+              bookmaker sono attribuzione della fonte, senza link, loghi, bonus o inviti al gioco.
+            </p>
+            <p className="mt-2 text-[11px] leading-relaxed text-faint">
+              Setup: <code>DATA_PROVIDER=football-data-uk</code>, poi{" "}
+              <code>npm run data:snapshot</code> e <code>npm run db:seed:real</code> (oppure{" "}
+              <code>npm run sync</code>). Lo snapshot incluso permette l&apos;avvio anche senza rete.
+            </p>
+          </Card>
+
+          <Card className="p-5">
+            <SectionHeading title="football-data.org v4 (opzionale, con chiave)" />
+            <p className="text-xs leading-relaxed text-muted">
+              Provider alternativo per calendario e risultati. Richiede una chiave API personale e non
+              espone quote. Il piano gratuito ha un limite dichiarato di 10 richieste al minuto ed espone
+              i risultati con un ritardo; le competizioni disponibili dipendono dal piano.
+            </p>
+            <p className="mt-2 text-[11px] leading-relaxed text-faint">
               Configurazione: <code>DATA_PROVIDER=football-data</code>,{" "}
               <code>FOOTBALL_DATA_API_KEY=...</code>, <code>FOOTBALL_DATA_COMPETITIONS=SA,PL,PD,BL1,FL1</code>.
-              Verifica sempre i termini e le quote correnti sul sito ufficiale del provider.
+              In questa modalità la UI mostra le quote come non disponibili.
             </p>
           </Card>
 
           <Card className="p-5">
             <SectionHeading title="Cosa non è una fonte" />
             <ul className="list-disc space-y-1 pl-5 text-xs leading-relaxed text-muted">
-              <li>Nessuna quota, nemmeno “a scopo illustrativo”.</li>
+              <li>Nessuna quota inventata, stimata o “a scopo illustrativo”.</li>
+              <li>Nessuna quota live: solo pre-partita o di chiusura, quando il CSV le contiene.</li>
               <li>Nessun dato social o notizia non verificata.</li>
               <li>Nessuna stima presentata come osservazione.</li>
               <li>Nessun dato personale degli utenti.</li>
@@ -128,8 +149,8 @@ export default function SourcesPage() {
       <div className="mt-4 flex items-start gap-2 rounded-xl border border-line bg-surface2/20 p-3 text-[10px] leading-relaxed text-muted">
         <Database className="mt-0.5 size-3.5 shrink-0 text-info" aria-hidden />
         <p>
-          La quota del provider è documentata ma non garantita: le condizioni possono cambiare. MatchLab
-          non promette gratuità perpetua né disponibilità continua. Vedi la{" "}
+          La disponibilità e le condizioni delle fonti sono documentate ma non garantite: possono
+          cambiare. MatchLab non promette gratuità perpetua né disponibilità continua. Vedi la{" "}
           <Link href="/methodology" className="text-accent-text hover:underline">
             metodologia
           </Link>{" "}

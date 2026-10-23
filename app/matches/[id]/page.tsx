@@ -7,6 +7,7 @@ import {
   CircleAlert,
   History,
   MapPin,
+  Scale,
   ShieldQuestion,
   Users,
 } from "lucide-react";
@@ -20,6 +21,7 @@ import {
   getFixture,
   getFixtureStatistics,
   getLineups,
+  getMarketSummariesForFixture,
   getPreferences,
   getStandings,
   listFixtures,
@@ -32,6 +34,7 @@ import { topCorrectScores } from "@/engine/markets";
 import { totalGoalsDistribution } from "@/engine/markets";
 import { headToHead, teamSummary, type FormEntry } from "@/features/teams/summary";
 import { PredictionForm, type PredictionOption } from "@/components/prediction-form";
+import { MarketPanel } from "@/components/market-panel";
 import { Pitch } from "@/components/pitch";
 import { CalibrationChart, GoalsDistribution, ScoreHeatmap } from "@/components/charts";
 import {
@@ -56,6 +59,7 @@ const TABS = [
   { id: "stats", label: "Statistiche", icon: BarChart3 },
   { id: "lineups", label: "Formazioni", icon: Users },
   { id: "availability", label: "Indisponibili", icon: ShieldQuestion },
+  { id: "market", label: "Mercato", icon: Scale },
   { id: "analysis", label: "Analisi", icon: BarChart3 },
   { id: "history", label: "Storico", icon: History },
 ] as const;
@@ -231,6 +235,7 @@ export default async function MatchPage({
   const model = predictionResult?.status === "OK" ? predictionResult.prediction : null;
 
   const statistics = getFixtureStatistics(fixture.id);
+  const marketSummaries = getMarketSummariesForFixture(fixture.id, model?.marketMap);
   const lineups = getLineups(fixture.id);
   const availability = getAvailability(fixture.id);
   const homeLineup = lineups.find((lineup) => lineup.teamId === fixture.homeTeamId);
@@ -489,7 +494,7 @@ export default async function MatchPage({
               <Card className="p-4">
                 <SectionHeading
                   title="Mercati più probabili"
-                  description="Probabilità più alte ≠ valore o convenienza. Nessuna quota è stata usata."
+                  description="Probabilità più alte ≠ valore o convenienza. Le quote, quando presenti, sono nel tab Mercato e non modificano le stime."
                 />
                 <div className="grid gap-3 sm:grid-cols-2">
                   {[...model.markets]
@@ -527,7 +532,8 @@ export default async function MatchPage({
 
             <Alert tone="info" title="Cosa non dice questa pagina">
               Le probabilità non incorporano notizie dell&apos;ultima ora, meteo, arbitri o motivazioni.
-              Non sono quotazioni e non garantiscono il risultato. Le formazioni “probabili” non sono
+              Non garantiscono il risultato. Le quote, quando mostrate, sono un dato di mercato separato:
+              non modificano le stime e non implicano un rendimento. Le formazioni “probabili” non sono
               ufficiali; quelle “ricostruite dal modello” sono una stima algoritmica e vanno lette come tale.
             </Alert>
           </div>
@@ -652,6 +658,18 @@ export default async function MatchPage({
               </div>
             </Card>
           </div>
+        ) : null}
+
+        {tab === "market" ? (
+          <MarketPanel
+            fixtureId={fixture.id}
+            homeTeamName={fixture.homeTeamName}
+            awayTeamName={fixture.awayTeamName}
+            summaries={marketSummaries}
+            oddsEnabled={dataSource.capabilities.odds}
+            finished={finished}
+            timezone={timezone}
+          />
         ) : null}
 
         {tab === "lineups" ? (
