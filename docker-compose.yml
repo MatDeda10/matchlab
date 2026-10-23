@@ -1,0 +1,15 @@
+services:
+  matchlab:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATA_PROVIDER: demo
+      SESSION_SECRET: ${SESSION_SECRET:?Imposta SESSION_SECRET (almeno 32 caratteri) nel file .env}
+      DATABASE_PATH: /app/data/matchlab.db
+    volumes:
+      - matchlab-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  matchlab-data:
