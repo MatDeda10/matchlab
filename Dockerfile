@@ -27,6 +27,8 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/.next ./.next
+# Snapshot reale compresso: permette il bootstrap senza rete con DATA_PROVIDER=football-data-uk.
+COPY --from=builder /app/data/real ./data/real
 COPY --from=builder /app/next.config.ts ./next.config.ts
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/db ./db

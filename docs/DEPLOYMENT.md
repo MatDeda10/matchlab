@@ -2,7 +2,7 @@
 
 ## Requisiti
 
-- Runtime **Node.js >= 22.5** (per `node:sqlite`).
+- Runtime **Node.js >= 24** (usa `node:sqlite` nativo; testato con Node 24 e 26).
 - Filesystem **persistente e scrivibile** per `data/matchlab.db`.
 - `SESSION_SECRET` (>= 32 caratteri) in produzione.
 
@@ -27,7 +27,9 @@ SESSION_SECRET="$(node -e "console.log(require('crypto').randomBytes(48).toStrin
   npm start
 ```
 
-Il database deve esistere e essere popolato (`npm run db:seed`) oppure verrà creato vuoto con le sole migrazioni.
+Il database deve essere popolato con `npm run setup` (DEMO), `npm run db:seed:real` (snapshot reale incluso) oppure verrà creato vuoto con le sole migrazioni. Con `DATA_PROVIDER=football-data-uk` e DB vuoto, lo snapshot viene importato automaticamente.
+
+> Il progetto usa `output: "standalone"`; `npm start` funziona ma Next.js segnala che in produzione è preferibile avviare il server standalone. In Docker viene usato `next start` per mantenere disponibili migrazioni e script nella stessa directory.
 
 ---
 
@@ -40,9 +42,11 @@ docker compose up --build
 ```
 
 - Il database vive nel volume `matchlab-data` montato su `/app/data`.
-- Al primo avvio l'entrypoint applica le migrazioni e crea il dataset DEMO se il DB non esiste.
+- Al primo avvio l'entrypoint applica le migrazioni. Se il DB non esiste, crea il dataset DEMO oppure importa lo snapshot reale quando `DATA_PROVIDER=football-data-uk` (o `open-data` / `AUTO_SEED_REAL=1`).
+- Lo snapshot `data/real/snapshot.json.gz.b64` è incluso nell'immagine: il primo avvio in modalità reale non richiede rete.
 - Il container gira come utente non-root.
-- `DATA_PROVIDER=demo` per default; per dati reali impostare `football-data` e la chiave.
+- `DATA_PROVIDER=demo` per default. Per dati reali gratuiti imposta `DATA_PROVIDER=football-data-uk`; non serve alcuna chiave API.
+- Se il volume contiene già un DB DEMO e vuoi passare ai dati reali, esegui una volta `docker compose run --rm --entrypoint "./node_modules/.bin/tsx scripts/db.ts seed-real" matchlab` (azzera il DB) oppure rimuovi il volume.
 
 ### Immagine manuale
 
@@ -133,7 +137,7 @@ Serve sostituire SQLite con un database gestito (es. Postgres/Neon) e implementa
 Manuale:
 
 ```bash
-DATA_PROVIDER=football-data FOOTBALL_DATA_API_KEY=... npm run sync
+DATA_PROVIDER=football-data-uk npm run sync
 ```
 
 Oppure via API (protetta da same-origin, sessione e rate limit):
@@ -147,7 +151,7 @@ curl -X POST https://tuo-dominio/api/sync \
 
 Per un cron esterno, usa un client che invii `Origin` corretto e gestisci la sessione. In alternativa, esegui lo script sul server con accesso al volume.
 
-La quota del provider è di 10 richieste/minuto: non schedulare sync troppo frequenti. La cache dell'adapter è di 6 ore.
+Il provider reale gratuito usa un rate limiter locale prudente (45 richieste/minuto, richieste sequenziali) e una cache SQLite di 6 ore. Non schedulare sync troppo frequenti: i CSV pubblici non sono un'API con SLA. Per football-data.org la quota dichiarata è di 10 richieste/minuto.
 
 ---
 
@@ -157,9 +161,13 @@ La quota del provider è di 10 richieste/minuto: non schedulare sync troppo freq
 | --- | --- | --- | --- |
 | `SESSION_SECRET` | ✅ in produzione | file locale in sviluppo | Firma del cookie |
 | `DATABASE_PATH` | no | `./data/matchlab.db` | Percorso SQLite |
-| `DATA_PROVIDER` | no | `demo` | `demo` o `football-data` |
-| `FOOTBALL_DATA_API_KEY` | con provider reale | — | Chiave personale |
-| `FOOTBALL_DATA_COMPETITIONS` | no | `SA,PL,PD,BL1,FL1` | Codici competizione |
+| `DATA_PROVIDER` | no | `demo` | `demo`, `football-data-uk` (alias `open-data`) o `football-data` |
+| `FOOTBALL_DATA_UK_HISTORY_SEASONS` | no | `3` | Stagioni storiche da football-data.co.uk (1–5) |
+| `FOOTBALL_DATA_UK_FORCE` | no | `0` | `1` ignora la cache HTTP |
+| `AUTO_SEED_REAL` | no | auto con provider reale | `0` disattiva il bootstrap dello snapshot; `1` lo forza |
+| `REAL_SNAPSHOT_PATH` | no | `data/real/snapshot.json.gz.b64` | Snapshot alternativo (`.json`, `.json.gz`, `.json.gz.b64`) |
+| `FOOTBALL_DATA_API_KEY` | solo `football-data` | — | Chiave personale football-data.org |
+| `FOOTBALL_DATA_COMPETITIONS` | no | `SA,PL,PD,BL1,FL1` | Codici competizione football-data.org |
 | `NEXT_PUBLIC_APP_VERSION` | no | `0.1.0` | Etichetta versione |
 
 Non committare mai `.env.local` o chiavi API.
@@ -180,8 +188,9 @@ Usalo per health check del container/proxy.
 - [ ] HTTPS attivo
 - [ ] Volume persistente montato e con backup
 - [ ] `npm run verify` verde
-- [ ] Dataset DEMO rigenerato o provider reale configurato
-- [ ] Health check risponde 200
+- [ ] Dataset DEMO rigenerato o snapshot/provider reale configurato
+- [ ] Health check risponde 200 e mostra `odds` tra le capability del provider reale
 - [ ] Limite di richieste del provider rispettato
+- [ ] Snapshot reale presente nell'immagine Docker (`data/real/snapshot.json.gz.b64`)
 - [ ] Disclaimer visibile
 - [ ] Log senza dati personali

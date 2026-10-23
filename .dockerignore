@@ -2,7 +2,12 @@ node_modules
 .next
 .git
 .gitignore
-data
+# Lo snapshot reale compresso è l'unico file di data/ necessario nell'immagine.
+data/*.db
+data/*.db-*
+data/.session-secret
+data/real/snapshot.json
+data/real/snapshot.json.gz
 coverage
 playwright-report
 test-results

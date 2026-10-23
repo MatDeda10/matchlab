@@ -4,7 +4,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATA_PROVIDER: demo
+      # Per dati reali: DATA_PROVIDER=football-data-uk (snapshot incluso nell'immagine).
+      DATA_PROVIDER: ${DATA_PROVIDER:-demo}
+      AUTO_SEED_REAL: ${AUTO_SEED_REAL:-}
       SESSION_SECRET: ${SESSION_SECRET:?Imposta SESSION_SECRET (almeno 32 caratteri) nel file .env}
       DATABASE_PATH: /app/data/matchlab.db
     volumes:

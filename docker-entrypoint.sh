@@ -6,9 +6,15 @@ set -e
 mkdir -p "$(dirname "$DATABASE_PATH")"
 
 if [ ! -f "$DATABASE_PATH" ]; then
-  echo "[matchlab] Database assente: applico migrazioni e dataset DEMO."
   ./node_modules/.bin/tsx scripts/db.ts migrate
-  ./node_modules/.bin/tsx scripts/db.ts seed
+
+  if [ "$DATA_PROVIDER" = "football-data-uk" ] || [ "$DATA_PROVIDER" = "open-data" ] || [ "$AUTO_SEED_REAL" = "1" ]; then
+    echo "[matchlab] Database assente: importo lo snapshot reale incluso."
+    ./node_modules/.bin/tsx scripts/db.ts seed-real
+  else
+    echo "[matchlab] Database assente: applico il dataset DEMO."
+    ./node_modules/.bin/tsx scripts/db.ts seed
+  fi
 else
   echo "[matchlab] Database esistente: applico eventuali nuove migrazioni."
   ./node_modules/.bin/tsx scripts/db.ts migrate
